@@ -20,6 +20,14 @@ spec:
         # 1. Main Express Backend Container
         - name: backend
           image: gcr.io/YOUR_GCP_PROJECT/dailynotescloud-backend:latest
+          # :latest is a placeholder for this template. In a real pipeline, tag
+          # images immutably (e.g. by git SHA) and update this field per deploy.
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           ports:
             - containerPort: 5000
           env:
@@ -27,9 +35,14 @@ spec:
               value: "5000"
             - name: NODE_ENV
               value: "production"
+            - name: CORS_ORIGIN
+              value: "https://YOUR_DOMAIN"
             # Connects via localhost since the Cloud SQL Auth Proxy sidecar runs on the same network namespace
             - name: DATABASE_URL
-              value: "postgresql://postgres:postgres@127.0.0.1:5432/dailynotescloud?schema=public"
+              valueFrom:
+                secretKeyRef:
+                  name: dailynotescloud-db-credentials
+                  key: DATABASE_URL
           resources:
             limits:
               cpu: "500m"
@@ -44,8 +57,11 @@ spec:
             initialDelaySeconds: 5
             periodSeconds: 10
           livenessProbe:
+            # Intentionally does not check the database: a transient DB
+            # outage should fail readiness (stop routing traffic), not
+            # liveness (which would restart otherwise-healthy pods).
             httpGet:
-              path: /health
+              path: /live
               port: 5000
             initialDelaySeconds: 15
             periodSeconds: 20
@@ -62,6 +78,9 @@ spec:
             - "YOUR_GCP_PROJECT:us-central1:dailynotescloud-db"
           securityContext:
             runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           resources:
             limits:
               cpu: "250m"

@@ -1,0 +1,12 @@
+# Requires a real domain pointed at the Ingress's static IP before GKE can
+# provision this certificate. Replace YOUR_DOMAIN, apply this file, then
+# `kubectl describe managedcertificate dailynotescloud-cert` to watch status
+# go from Provisioning -> Active.
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: dailynotescloud-cert
+  namespace: default
+spec:
+  domains:
+    - YOUR_DOMAIN

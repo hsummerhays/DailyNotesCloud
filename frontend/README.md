@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# DailyNotesCloud - Frontend Client
 
-## Getting Started
+This is the frontend client for DailyNotesCloud, built with **Next.js** (App Router), **TypeScript**, **Tailwind CSS v4**, and **Vitest**.
 
-First, run the development server:
+The client is designed to be **offline-first**: it automatically attempts to synchronize with the Express backend, but falls back seamlessly to an interactive local storage state if the API is offline.
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+---
+
+## Architecture & Code Structure
+
+The client codebase is structured into highly modular components and service layers:
+
+```text
+├── src/
+│   ├── app/
+│   │   ├── globals.css         # Tailwind CSS imports and custom base styles
+│   │   ├── layout.tsx          # Main application shell & fonts
+│   │   └── page.tsx            # App container coordinating state and sync
+│   ├── components/             # Reusable UI components
+│   │   ├── ErrorBanner.tsx     # Handles API connection warning banners
+│   │   ├── NoteCard.tsx        # Individual Note display with delete controls
+│   │   ├── NoteForm.tsx        # Form for creating new notes (with tag parser)
+│   │   ├── StatusBadge.tsx     # Connection status indicator (Connected/Offline)
+│   │   ├── TaskForm.tsx        # Quick-add form for checklist tasks
+│   │   ├── TaskItem.tsx        # Task checklist item with toggle and delete
+│   │   └── __tests__/          # Vitest component tests
+│   └── lib/                    # Core service utilities
+│       ├── api.ts              # Fetch-based REST client for notes & tasks
+│       ├── storage.ts          # LocalStorage fallback wrappers
+│       ├── types.ts            # Shared TypeScript type definitions
+│       └── __tests__/          # Service unit tests
+├── vitest.config.ts            # Testing configuration
+└── vitest.setup.ts             # React Testing Library configuration
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Development & Build Commands
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Run these commands inside the `/frontend` directory:
 
-## Learn More
+### Development Server
+Starts the hot-reloading development server on [http://localhost:3000](http://localhost:3000).
+```bash
+npm run dev
+```
 
-To learn more about Next.js, take a look at the following resources:
+### Production Build
+Compiles the TypeScript and bundles the Next.js application into highly optimized static and server-rendered outputs under `.next/`.
+```bash
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### Run Production Server
+Starts the built Next.js application in production mode.
+```bash
+npm run start
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### Code Linting
+Lints the code using ESLint. Note that due to upstream plugin constraints (`eslint-plugin-react` vs. ESLint 10), lint warnings do not block the build process.
+```bash
+npm run lint
+```
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Testing
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The frontend uses **Vitest** and **React Testing Library** for lightning-fast unit and component testing.
+
+### Run Tests
+```bash
+npm test
+```
+
+### Watch Mode
+```bash
+npx vitest
+```

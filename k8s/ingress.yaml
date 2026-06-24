@@ -1,3 +1,13 @@
+apiVersion: networking.gke.io/v1beta1
+kind: FrontendConfig
+metadata:
+  name: dailynotescloud-frontend-config
+  namespace: default
+spec:
+  redirectToHttps:
+    enabled: true
+    responseCodeName: MOVED_PERMANENTLY_DEFAULT
+---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
@@ -6,8 +16,12 @@ metadata:
   annotations:
     # Uses GKE's HTTP(S) Load Balancer
     kubernetes.io/ingress.class: "gce"
-    # Enables session affinity or other GCP Load Balancer configurations if required
+    # Kept on so the load balancer stays reachable over HTTP while the
+    # managed certificate provisions; the FrontendConfig below redirects
+    # all HTTP traffic to HTTPS once it's serving.
     kubernetes.io/ingress.allow-http: "true"
+    networking.gke.io/managed-certificates: "dailynotescloud-cert"
+    networking.gke.io/v1beta1.FrontendConfig: "dailynotescloud-frontend-config"
 spec:
   rules:
     - http:
@@ -20,7 +34,7 @@ spec:
                 name: dailynotescloud-backend-service
                 port:
                   number: 5000
-          
+
           # Route backend health checks
           - path: /health
             pathType: Exact

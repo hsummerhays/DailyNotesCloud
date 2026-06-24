@@ -37,6 +37,9 @@ lerna-debug.log*
 *.pem
 *.key
 
+# Real K8s secrets (copy from k8s/secrets.example.yaml and fill in locally)
+k8s/secrets.yaml
+
 # IDEs, editors and system files
 .idea/
 .vscode/

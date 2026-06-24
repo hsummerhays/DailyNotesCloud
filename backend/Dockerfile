@@ -6,14 +6,15 @@ RUN npm ci
 COPY tsconfig.json ./
 COPY src/ ./src/
 RUN npm run build
-RUN cp src/db/schema.sql dist/db/schema.sql
 
 # Production Stage
 FROM node:20-alpine
 WORKDIR /app
 ENV NODE_ENV=production
 COPY package*.json ./
-RUN npm ci --only=production
-COPY --from=builder /app/dist ./dist
+RUN npm ci --omit=dev
+COPY --from=builder --chown=node:node /app/dist ./dist
+COPY --chown=node:node migrations/ ./migrations/
+USER node
 EXPOSE 5000
 CMD ["node", "dist/server.js"]

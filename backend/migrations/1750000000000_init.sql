@@ -1,3 +1,5 @@
+-- Up Migration
+
 -- Enable UUID extension for secure, non-sequential identifiers
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
@@ -61,3 +63,12 @@ CREATE TABLE IF NOT EXISTS attachments (
 CREATE INDEX IF NOT EXISTS idx_notes_user ON notes(user_id);
 CREATE INDEX IF NOT EXISTS idx_tasks_user ON tasks(user_id);
 CREATE INDEX IF NOT EXISTS idx_attachments_note ON attachments(note_id);
+
+-- Down Migration
+
+DROP TABLE IF EXISTS attachments;
+DROP TABLE IF EXISTS note_tags;
+DROP TABLE IF EXISTS tasks;
+DROP TABLE IF EXISTS notes;
+DROP TABLE IF EXISTS tags;
+DROP TABLE IF EXISTS users;

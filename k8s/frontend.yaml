@@ -19,6 +19,14 @@ spec:
       containers:
         - name: frontend
           image: gcr.io/YOUR_GCP_PROJECT/dailynotescloud-frontend:latest
+          # :latest is a placeholder for this template. In a real pipeline, tag
+          # images immutably (e.g. by git SHA) and update this field per deploy.
+          imagePullPolicy: Always
+          securityContext:
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
           ports:
             - containerPort: 3000
           env:

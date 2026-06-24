@@ -26,7 +26,3 @@ pool.on("connect", () => {
 pool.on("error", (err) => {
   console.error("[db]: Unexpected error on idle database client", err);
 });
-
-export const query = (text: string, params?: any[]) => {
-  return pool.query(text, params);
-};
