@@ -41,8 +41,18 @@ spec:
             - name: DATABASE_URL
               valueFrom:
                 secretKeyRef:
-                  name: dailynotescloud-db-credentials
+                  name: dailynotescloud-backend-secrets
                   key: DATABASE_URL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: dailynotescloud-backend-secrets
+                  key: JWT_SECRET
+            # Public OAuth client ID (not a secret). Omit this var entirely
+            # to keep Google Sign-In disabled; the backend fails closed
+            # with 503 rather than accepting unverified tokens.
+            - name: GOOGLE_CLIENT_ID
+              value: ""
           resources:
             limits:
               cpu: "500m"

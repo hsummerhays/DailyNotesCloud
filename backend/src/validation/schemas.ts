@@ -30,3 +30,20 @@ export const updateTaskSchema = z.object({
 export const idParamSchema = z.object({
   id: z.uuid("Invalid id"),
 });
+
+const emailSchema = z.string().trim().max(255).pipe(z.email("Invalid email address"));
+
+export const signupSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(8, "Password must be at least 8 characters").max(100),
+  displayName: z.string().trim().min(1, "Display name is required").max(100),
+});
+
+export const loginSchema = z.object({
+  email: emailSchema,
+  password: z.string().min(1, "Password is required"),
+});
+
+export const googleAuthSchema = z.object({
+  credential: z.string().min(1, "Google credential token is required"),
+});

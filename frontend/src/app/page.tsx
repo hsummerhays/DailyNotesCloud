@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { ApiError, checkHealth, notesApi, tasksApi } from "@/lib/api";
 import { loadFromStorage, saveToStorage } from "@/lib/storage";
 import type { BackendStatus, Note, Task } from "@/lib/types";
+import { useAuth } from "@/lib/AuthContext";
+import { AuthView } from "@/components/AuthView";
 import { ErrorBanner } from "@/components/ErrorBanner";
 import { NoteCard } from "@/components/NoteCard";
 import { NoteForm } from "@/components/NoteForm";
@@ -45,11 +47,13 @@ function describeError(err: unknown, fallback: string): string {
 }
 
 export default function Home() {
+  const { user, isAuthenticated, isLoading, logout } = useAuth();
   const [notes, setNotes] = useState<Note[]>([]);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [backendStatus, setBackendStatus] = useState<BackendStatus>("connecting");
   const [error, setError] = useState<string | null>(null);
 
+  // Initialize data and re-fetch when authentication state changes
   useEffect(() => {
     async function init() {
       const healthy = await checkHealth();
@@ -62,6 +66,10 @@ export default function Home() {
       }
 
       setBackendStatus("connected");
+
+      // If backend is online, but we are not authenticated yet, wait for login
+      if (!isAuthenticated) return;
+
       try {
         const [notesData, tasksData] = await Promise.all([notesApi.list(), tasksApi.list()]);
         setNotes(notesData);
@@ -71,8 +79,9 @@ export default function Home() {
       }
     }
     init();
-  }, []);
+  }, [isAuthenticated]);
 
+  // Persist offline changes to localStorage
   useEffect(() => {
     if (backendStatus === "offline" && notes.length > 0) {
       saveToStorage(NOTES_STORAGE_KEY, notes);
@@ -154,6 +163,38 @@ export default function Home() {
     setTasks((prev) => prev.filter((task) => task.id !== id));
   };
 
+  // 1. Session check loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex items-center justify-center">
+        <div className="animate-spin h-8 w-8 text-sky-500 rounded-full border-4 border-t-transparent border-sky-500/25"></div>
+      </div>
+    );
+  }
+
+  // 2. Lock dashboard behind login if backend is online and user is unauthenticated
+  if (backendStatus === "connected" && !isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-950 flex flex-col">
+        <header className="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-sky-500 to-indigo-500 flex items-center justify-center shadow-lg shadow-sky-500/20">
+              <span className="font-bold text-white text-lg">D</span>
+            </div>
+            <span className="font-bold text-xl tracking-tight bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">
+              DailyNotesCloud
+            </span>
+          </div>
+          <div className="flex items-center gap-4">
+            <StatusBadge status={backendStatus} />
+          </div>
+        </header>
+        <AuthView />
+      </div>
+    );
+  }
+
+  // 3. Render Dashboard (Online & Authenticated OR Offline Mode)
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col">
       <header className="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md sticky top-0 z-50 px-6 py-4 flex items-center justify-between">
@@ -168,6 +209,17 @@ export default function Home() {
 
         <div className="flex items-center gap-4">
           <StatusBadge status={backendStatus} />
+          {user && (
+            <div className="flex items-center gap-3 pl-3 border-l border-slate-800">
+              <span className="text-sm font-semibold text-slate-300 hidden sm:inline">{user.displayName}</span>
+              <button
+                onClick={logout}
+                className="text-xs font-semibold px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors cursor-pointer"
+              >
+                Sign Out
+              </button>
+            </div>
+          )}
         </div>
       </header>
 
@@ -209,7 +261,10 @@ export default function Home() {
               <div className="text-xs text-slate-400 mt-1">Tasks Completed</div>
             </div>
             <div className="h-12 w-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="m9 12 2 2 4-4"/></svg>
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z" />
+                <path d="m9 12 2 2 4-4" />
+              </svg>
             </div>
           </div>
 

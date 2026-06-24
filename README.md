@@ -43,6 +43,30 @@ To run the application locally using Docker Compose, you need Docker installed o
    - Backend: `http://localhost:5000`
    - Database: `localhost:5432`
 
+### Fast Local Startup (PowerShell)
+
+For Windows/PowerShell developers, we provide automated helper scripts at the root directory to manage the entire container and database lifecycle in a single command:
+
+*   **Start/Restart the environment**:
+    ```powershell
+    .\start.ps1
+    ```
+    *This automatically stops any running containers, rebuilds/starts the containers, polls the database until it is fully online, and applies all database migrations and seeds demo data.*
+*   **Start with a clean database reset**:
+    ```powershell
+    .\start.ps1 -Reset
+    ```
+    *This stops the environment, completely deletes the PostgreSQL database volumes, and starts the stack fresh with new migrations and seeds.*
+*   **Stop the environment**:
+    ```powershell
+    .\stop.ps1
+    ```
+    *Shuts down all services and networks while preserving database data.*
+*   **Stop and delete database volumes**:
+    ```powershell
+    .\stop.ps1 -Reset
+    ```
+
 ## Database Migrations
 
 Schema changes live in `backend/migrations/` as plain SQL files (managed by
@@ -107,7 +131,8 @@ docker push ${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO_NAME}/frontend:latest
 2. In `k8s/backend.yaml` and `k8s/frontend.yaml`, replace `gcr.io/YOUR_GCP_PROJECT/...` with your actual Artifact Registry image paths, and `:latest` with an immutable tag (e.g. the git SHA) per deploy.
 3. In `k8s/backend.yaml`, update the `cloud-sql-proxy` sidecar argument with your Cloud SQL instance connection name (`PROJECT:REGION:INSTANCE`), and set `CORS_ORIGIN` to your real domain.
 4. In `k8s/managed-certificate.yaml`, replace `YOUR_DOMAIN` with the domain you'll point at the Ingress's static IP.
-5. Copy `k8s/secrets.example.yaml` to `k8s/secrets.yaml` (gitignored) and fill in real database credentials. Never commit this file -- in production, prefer sourcing it from Secret Manager (e.g. the Secret Manager CSI driver) instead.
+5. Copy `k8s/secrets.example.yaml` to `k8s/secrets.yaml` (gitignored) and fill in real database credentials and a `JWT_SECRET` (generate with `node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"`). Never commit this file -- in production, prefer sourcing it from Secret Manager (e.g. the Secret Manager CSI driver) instead. The backend refuses to start without `JWT_SECRET` set.
+6. (Optional) To enable Google Sign-In, set `GOOGLE_CLIENT_ID` in `k8s/backend.yaml` and `NEXT_PUBLIC_GOOGLE_CLIENT_ID` in `k8s/frontend.yaml` to your OAuth client ID (public, not a secret). Leave both empty to keep Google Sign-In disabled -- the backend fails closed with 503 rather than accepting unverified tokens.
 
 ### 3. Deploy to GKE Cluster
 

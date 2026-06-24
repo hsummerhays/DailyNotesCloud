@@ -1,13 +1,13 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
 import { HttpError } from "../middleware/errorHandler.js";
-import { getOrCreateDemoUser } from "../services/demoUser.js";
+import { AuthenticatedRequest } from "../middleware/auth.js";
 import { createTaskSchema, idParamSchema, updateTaskSchema } from "../validation/schemas.js";
 
 const router = Router();
 
-router.get("/", async (req, res) => {
-  const userId = await getOrCreateDemoUser();
+router.get("/", async (req: AuthenticatedRequest, res) => {
+  const userId = req.user!.id;
   const result = await pool.query(
     `SELECT id, title, completed, created_at as "createdAt"
      FROM tasks
@@ -18,9 +18,9 @@ router.get("/", async (req, res) => {
   res.json(result.rows);
 });
 
-router.post("/", async (req, res) => {
+router.post("/", async (req: AuthenticatedRequest, res) => {
   const { title, completed } = createTaskSchema.parse(req.body);
-  const userId = await getOrCreateDemoUser();
+  const userId = req.user!.id;
 
   const result = await pool.query(
     `INSERT INTO tasks (user_id, title, completed)
@@ -31,10 +31,10 @@ router.post("/", async (req, res) => {
   res.status(201).json(result.rows[0]);
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", async (req: AuthenticatedRequest, res) => {
   const { id } = idParamSchema.parse(req.params);
   const { completed } = updateTaskSchema.parse(req.body);
-  const userId = await getOrCreateDemoUser();
+  const userId = req.user!.id;
 
   const result = await pool.query(
     `UPDATE tasks
@@ -50,9 +50,9 @@ router.put("/:id", async (req, res) => {
   res.json(result.rows[0]);
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", async (req: AuthenticatedRequest, res) => {
   const { id } = idParamSchema.parse(req.params);
-  const userId = await getOrCreateDemoUser();
+  const userId = req.user!.id;
   const result = await pool.query(
     "DELETE FROM tasks WHERE id = $1 AND user_id = $2 RETURNING id;",
     [id, userId]

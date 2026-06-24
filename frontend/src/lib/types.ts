@@ -14,3 +14,9 @@ export interface Task {
 }
 
 export type BackendStatus = "connecting" | "connected" | "offline";
+
+export interface User {
+  id: string;
+  email: string;
+  displayName: string;
+}

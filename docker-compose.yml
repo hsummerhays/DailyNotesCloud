@@ -24,6 +24,10 @@ services:
       - PORT=5000
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/dailynotescloud?schema=public
       - CORS_ORIGIN=http://localhost:3000
+      # Local-dev-only value, fine to commit. Never reuse in a real deployment.
+      - JWT_SECRET=local-dev-jwt-secret-do-not-use-in-production
+      # Leave unset to keep Google Sign-In disabled (fails closed with 503).
+      - GOOGLE_CLIENT_ID=
     depends_on:
       - db
 
@@ -37,6 +41,9 @@ services:
       - "3000:3000"
     environment:
       - NEXT_PUBLIC_API_URL=http://localhost:5000
+      # Public OAuth client ID (not a secret). Leave unset to hide the
+      # Google Sign-In button -- the backend disables that route too.
+      - NEXT_PUBLIC_GOOGLE_CLIENT_ID=
     depends_on:
       - backend
 

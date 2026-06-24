@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { pool } from "../db/index.js";
 import { HttpError } from "../middleware/errorHandler.js";
-import { getOrCreateDemoUser } from "../services/demoUser.js";
+import { AuthenticatedRequest } from "../middleware/auth.js";
 import { createNoteSchema, idParamSchema, updateNoteSchema } from "../validation/schemas.js";
 
 const router = Router();
@@ -28,8 +28,8 @@ async function applyTags(client: import("pg").PoolClient, noteId: string, tags: 
   return cleanTags;
 }
 
-router.get("/", async (req, res) => {
-  const userId = await getOrCreateDemoUser();
+router.get("/", async (req: AuthenticatedRequest, res) => {
+  const userId = req.user!.id;
   const result = await pool.query(
     `SELECT n.id, n.title, n.content, n.created_at as "createdAt",
             COALESCE(json_agg(t.name) FILTER (WHERE t.name IS NOT NULL), '[]') as tags
@@ -44,9 +44,9 @@ router.get("/", async (req, res) => {
   res.json(result.rows);
 });
 
-router.post("/", async (req, res) => {
+router.post("/", async (req: AuthenticatedRequest, res) => {
   const { title, content, tags } = createNoteSchema.parse(req.body);
-  const userId = await getOrCreateDemoUser();
+  const userId = req.user!.id;
 
   const client = await pool.connect();
   try {
@@ -71,10 +71,10 @@ router.post("/", async (req, res) => {
   }
 });
 
-router.put("/:id", async (req, res) => {
+router.put("/:id", async (req: AuthenticatedRequest, res) => {
   const { id } = idParamSchema.parse(req.params);
   const updates = updateNoteSchema.parse(req.body);
-  const userId = await getOrCreateDemoUser();
+  const userId = req.user!.id;
 
   const client = await pool.connect();
   try {
@@ -130,9 +130,9 @@ router.put("/:id", async (req, res) => {
   }
 });
 
-router.delete("/:id", async (req, res) => {
+router.delete("/:id", async (req: AuthenticatedRequest, res) => {
   const { id } = idParamSchema.parse(req.params);
-  const userId = await getOrCreateDemoUser();
+  const userId = req.user!.id;
   const result = await pool.query(
     "DELETE FROM notes WHERE id = $1 AND user_id = $2 RETURNING id;",
     [id, userId]

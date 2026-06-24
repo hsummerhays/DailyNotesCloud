@@ -4,7 +4,9 @@ import express from "express";
 import rateLimit from "express-rate-limit";
 import helmet from "helmet";
 import { errorHandler, notFoundHandler } from "./middleware/errorHandler.js";
+import { requireAuth } from "./middleware/auth.js";
 import healthRouter from "./routes/health.js";
+import authRouter from "./routes/auth.js";
 import notesRouter from "./routes/notes.js";
 import tasksRouter from "./routes/tasks.js";
 
@@ -36,8 +38,12 @@ app.get("/api", (req, res) => {
   res.json({ message: "Welcome to the DailyNotesCloud API" });
 });
 
-app.use("/api/notes", notesRouter);
-app.use("/api/tasks", tasksRouter);
+// Authentication routes
+app.use("/api/auth", authRouter);
+
+// Protected application routes
+app.use("/api/notes", requireAuth, notesRouter);
+app.use("/api/tasks", requireAuth, tasksRouter);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

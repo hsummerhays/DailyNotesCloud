@@ -38,6 +38,10 @@ spec:
             # When routed through the Ingress, relative API calls can also be used.
             - name: NEXT_PUBLIC_API_URL
               value: ""
+            # Public OAuth client ID (not a secret). Omit to hide the
+            # Google Sign-In button -- the backend disables that route too.
+            - name: NEXT_PUBLIC_GOOGLE_CLIENT_ID
+              value: ""
           resources:
             limits:
               cpu: "500m"
