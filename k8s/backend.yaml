@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: dailynotescloud-backend
+  namespace: default
+  labels:
+    app: dailynotescloud-backend
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: dailynotescloud-backend
+  template:
+    metadata:
+      labels:
+        app: dailynotescloud-backend
+    spec:
+      serviceAccountName: dailynotescloud-backend-sa
+      containers:
+        # 1. Main Express Backend Container
+        - name: backend
+          image: gcr.io/YOUR_GCP_PROJECT/dailynotescloud-backend:latest
+          ports:
+            - containerPort: 5000
+          env:
+            - name: PORT
+              value: "5000"
+            - name: NODE_ENV
+              value: "production"
+            # Connects via localhost since the Cloud SQL Auth Proxy sidecar runs on the same network namespace
+            - name: DATABASE_URL
+              value: "postgresql://postgres:postgres@127.0.0.1:5432/dailynotescloud?schema=public"
+          resources:
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 5000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+
+        # 2. Cloud SQL Auth Proxy Sidecar
+        # This proxy listens on localhost:5432 and forwards traffic securely to your GCP Cloud SQL instance.
+        # It leverages GKE Workload Identity via the pod's Service Account to authenticate with GCP.
+        - name: cloud-sql-proxy
+          image: gcr.io/cloud-sql-connectors/cloud-sql-proxy:2.11.2-alpine
+          args:
+            - "--structured-logs"
+            - "--port=5432"
+            # Replace with your Cloud SQL instance connection name
+            - "YOUR_GCP_PROJECT:us-central1:dailynotescloud-db"
+          securityContext:
+            runAsNonRoot: true
+          resources:
+            limits:
+              cpu: "250m"
+              memory: "256Mi"
+            requests:
+              cpu: "50m"
+              memory: "128Mi"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: dailynotescloud-backend-service
+  namespace: default
+spec:
+  type: ClusterIP
+  ports:
+    - port: 5000
+      targetPort: 5000
+      protocol: TCP
+  selector:
+    app: dailynotescloud-backend

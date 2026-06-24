@@ -1,0 +1,40 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: dailynotescloud-ingress
+  namespace: default
+  annotations:
+    # Uses GKE's HTTP(S) Load Balancer
+    kubernetes.io/ingress.class: "gce"
+    # Enables session affinity or other GCP Load Balancer configurations if required
+    kubernetes.io/ingress.allow-http: "true"
+spec:
+  rules:
+    - http:
+        paths:
+          # Route backend API requests
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: dailynotescloud-backend-service
+                port:
+                  number: 5000
+          
+          # Route backend health checks
+          - path: /health
+            pathType: Exact
+            backend:
+              service:
+                name: dailynotescloud-backend-service
+                port:
+                  number: 5000
+
+          # Route all other traffic to the Next.js frontend
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: dailynotescloud-frontend-service
+                port:
+                  number: 3000
