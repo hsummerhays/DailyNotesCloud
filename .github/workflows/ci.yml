@@ -15,7 +15,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: backend/package-lock.json
       - run: npm ci
@@ -31,18 +31,13 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: "20"
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
       - run: npm ci
       - run: npm test
       - run: npm run build
-      # eslint-config-next's eslint-plugin-react is currently incompatible
-      # with this project's ESLint version (fails on its own config file,
-      # independent of any application code). Non-blocking until upstream
-      # fixes that; remove continue-on-error once it's resolved.
       - run: npm run lint
-        continue-on-error: true
 
   docker:
     runs-on: ubuntu-latest

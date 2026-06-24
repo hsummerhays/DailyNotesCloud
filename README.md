@@ -14,7 +14,7 @@ To run the application locally using Docker Compose, you need Docker installed o
 
 ### Prerequisites
 
-- Node.js (v20 or higher)
+- Node.js (v22 or higher)
 - Docker and Docker Compose
 
 ### Running the Services
